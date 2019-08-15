@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import argparse
 import chainer
 import numpy as np
@@ -10,7 +11,7 @@ from flask_cors import CORS
 
 from train_mnist import MLP
 
-
+hostname = os.environ['HOSTNAME']
 app = Flask(__name__)
 CORS(app) # local post by Ajax
 model = MLP(100, 10)
@@ -26,7 +27,8 @@ def index():
            'c2': '{:.4f}'.format(ans[0][2]), 'c3': '{:.4f}'.format(ans[0][3]),
            'c4': '{:.4f}'.format(ans[0][4]), 'c5': '{:.4f}'.format(ans[0][5]),
            'c6': '{:.4f}'.format(ans[0][6]), 'c7': '{:.4f}'.format(ans[0][7]),
-           'c8': '{:.4f}'.format(ans[0][8]), 'c9': '{:.4f}'.format(ans[0][9])})
+           'c8': '{:.4f}'.format(ans[0][8]), 'c9': '{:.4f}'.format(ans[0][9]),
+           'hostname': hostname})
     else:
         return render_template('index.html')
 
