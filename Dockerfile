@@ -12,6 +12,7 @@ RUN python train_mnist.py -u 100 -e 5
 RUN pip install flask flask-cors
 
 EXPOSE 5000
+ENV RECOGNITION_NUM=1
 
 # entrypoint
 COPY entrypoint.sh /entrypoint.sh

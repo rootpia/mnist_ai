@@ -12,6 +12,7 @@ from flask_cors import CORS
 from train_mnist import MLP
 
 hostname = os.environ['HOSTNAME']
+recognum = os.environ['RECOGNICTION_NUM']
 app = Flask(__name__)
 CORS(app) # local post by Ajax
 model = MLP(100, 10)
@@ -21,7 +22,8 @@ chainer.serializers.load_npz('result/pretrained_model', model)
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        ans = get_answer(request)
+        for xx in range(recognum):
+            ans = get_answer(request)
         return jsonify({'ans': ans[1],
            'c0': '{:.4f}'.format(ans[0][0]), 'c1': '{:.4f}'.format(ans[0][1]),
            'c2': '{:.4f}'.format(ans[0][2]), 'c3': '{:.4f}'.format(ans[0][3]),
