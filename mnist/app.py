@@ -12,7 +12,7 @@ from flask_cors import CORS
 from train_mnist import MLP
 
 hostname = os.environ['HOSTNAME']
-recognum = os.environ['RECOGNICTION_NUM']
+recognum = os.environ['RECOGNITION_NUM']
 app = Flask(__name__)
 CORS(app) # local post by Ajax
 model = MLP(100, 10)
