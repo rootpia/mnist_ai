@@ -8,11 +8,13 @@ import re, base64, cv2
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
+import redis
 
 from train_mnist import MLP
 
 hostname = os.environ['HOSTNAME']
 recognum = int(os.environ['RECOGNITION_NUM'])
+db = redis.Redis(host='db', port=6379, db=0)
 app = Flask(__name__)
 CORS(app) # local post by Ajax
 model = MLP(100, 10)
@@ -41,7 +43,8 @@ def get_answer(req):
     img_neg = 255 - img_src
     img_gray = cv2.cvtColor(img_neg, cv2.COLOR_BGR2GRAY)
     img_resize = cv2.resize(img_gray,(28,28))
-    cv2.imwrite("images/{}.jpg".format(datetime.now().strftime('%s')), img_resize)
+    image_save(img_resize)
+
     data = img_resize.astype(np.float32)
     ans = single_predictor(model, data)
     return ans
@@ -53,6 +56,17 @@ def single_predictor(model, image):
     label_y = [np.argmax(pred[i]) for i in range(len(pred))]
     return (pred[0], label_y[0])
 
+def image_save(npimage):
+#    cv2.imwrite("images/{}.jpg".format(datetime.now().strftime('%s')), npimage)
+    keyname = datetime.now().strftime('%s')
+    db.set(keyname, npimage.tostring())
+    filepath = "images/{}.jpg".format(keyname)
+    cv2.imwrite(filepath, npimage)
+
+def image_load(keyname):
+#    img = cv2.imread("images/1571757228.jpg", cv2.IMREAD_GRAYSCALE)
+    npimage = np.fromstring(db.get(keyname), np.uint8).reshape((28,28))
+    return npimage
 
 if __name__ == "__main__":
     app.run(debug=False, host='0.0.0.0', port=5000) 
