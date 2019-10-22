@@ -7,7 +7,7 @@ RUN apt-get update &&\
 COPY mnist /tmp/mnist
 WORKDIR /tmp/mnist
 #RUN python train_mnist.py -u 100 -e 5
-COPY pretrained /tmp/mnist/pretrained
+COPY pretrained /tmp/mnist/result
 
 # app
 RUN pip install flask flask-cors redis
