@@ -21,18 +21,18 @@ model = MLP(100, 10)
 chainer.serializers.load_npz('result/pretrained_model', model)
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/answer', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         for xx in range(recognum):
-            ans = get_answer(request)
+            ans, keyname = get_answer(request)
         return jsonify({'ans': ans[1],
            'c0': '{:.4f}'.format(ans[0][0]), 'c1': '{:.4f}'.format(ans[0][1]),
            'c2': '{:.4f}'.format(ans[0][2]), 'c3': '{:.4f}'.format(ans[0][3]),
            'c4': '{:.4f}'.format(ans[0][4]), 'c5': '{:.4f}'.format(ans[0][5]),
            'c6': '{:.4f}'.format(ans[0][6]), 'c7': '{:.4f}'.format(ans[0][7]),
            'c8': '{:.4f}'.format(ans[0][8]), 'c9': '{:.4f}'.format(ans[0][9]),
-           'hostname': hostname})
+           'hostname': hostname, 'keyname': keyname})
     else:
         return render_template('index.html')
 
@@ -43,11 +43,11 @@ def get_answer(req):
     img_neg = 255 - img_src
     img_gray = cv2.cvtColor(img_neg, cv2.COLOR_BGR2GRAY)
     img_resize = cv2.resize(img_gray,(28,28))
-    image_save(img_resize)
-
     data = img_resize.astype(np.float32)
     ans = single_predictor(model, data)
-    return ans
+
+    keyname = image_save(img_resize, ans)
+    return ans, keyname
 
 def single_predictor(model, image):
     test = np.array(image).reshape(1, -1)
@@ -56,17 +56,30 @@ def single_predictor(model, image):
     label_y = [np.argmax(pred[i]) for i in range(len(pred))]
     return (pred[0], label_y[0])
 
-def image_save(npimage):
+def image_save(npimage, ans):
 #    cv2.imwrite("images/{}.jpg".format(datetime.now().strftime('%s')), npimage)
     keyname = datetime.now().strftime('%s')
-    db.set(keyname, npimage.tostring())
-    filepath = "images/{}.jpg".format(keyname)
+    db.hset(keyname, 'img', npimage.tostring())
+    db.hset(keyname, 'pred', ans)
+    filepath = "images/{}-{}.jpg".format(keyname, ans)
     cv2.imwrite(filepath, npimage)
+    return keyname
 
 def image_load(keyname):
 #    img = cv2.imread("images/1571757228.jpg", cv2.IMREAD_GRAYSCALE)
-    npimage = np.fromstring(db.get(keyname), np.uint8).reshape((28,28))
+    npimage = np.fromstring(db.hget(keyname, 'img'), np.uint8).reshape((28,28))
     return npimage
+
+@app.route('/annotation', methods=['GET', 'POST'])
+def setGroundTruth():
+    if request.method == 'POST':
+        keyword = request.form['keyword']
+        gt = request.form['newnum']
+        db.hset(keyname, 'gt', gt)
+        return jsonify({'result': "true"})
+    else:
+        return render_template('index.html')
+
 
 if __name__ == "__main__":
     app.run(debug=False, host='0.0.0.0', port=5000) 
