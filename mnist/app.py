@@ -19,7 +19,7 @@ model = MLP(100, 10)
 chainer.serializers.load_npz('result/pretrained_model', model)
 
 
-@app.route('/ai/answer', methods=['GET', 'POST'])
+@app.route('/api/answer', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         for xx in range(recognum):
@@ -34,7 +34,7 @@ def index():
     else:
         return render_template('index.html')
 
-@app.route('/ai/annotation', methods=['GET', 'POST'])
+@app.route('/api/annotation', methods=['GET', 'POST'])
 def setGroundTruth():
     if request.method == 'POST':
         keyname = request.form['keyname']
