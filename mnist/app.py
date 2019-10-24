@@ -39,7 +39,6 @@ def setGroundTruth():
     if request.method == 'POST':
         keyname = request.form['keyname']
         gt = request.form['newnum']
-        db.hdel(keyname, 'gt')
         db.hset(keyname, 'gt', gt)
         return jsonify({'result': "true"})
     else:
