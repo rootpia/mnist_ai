@@ -39,6 +39,7 @@ def setGroundTruth():
     if request.method == 'POST':
         keyname = request.form['keyname']
         gt = request.form['newnum']
+        db.hdel(keyname, 'gt')
         db.hset(keyname, 'gt', gt)
         return jsonify({'result': "true"})
     else:
@@ -69,6 +70,7 @@ def image_save(npimage, ans):
     keyname = datetime.now().strftime('%s')
     db.hset(keyname, 'img', npimage.tostring())
     db.hset(keyname, 'pred', str(ans))
+    db.hset(keyname, 'gt', str(ans))
     filepath = "images/{}-{}.jpg".format(keyname, ans)
     cv2.imwrite(filepath, npimage)
     return keyname
