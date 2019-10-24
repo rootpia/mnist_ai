@@ -1,17 +1,15 @@
 #!/usr/bin/env python
-
-import os
-import argparse
-import chainer
+import os, argparse
 import numpy as np
 import re, base64, cv2
+import chainer
+import redis
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
-import redis
-
 from train_mnist import MLP
 
+# initialize
 hostname = os.environ['HOSTNAME']
 recognum = int(os.environ['RECOGNITION_NUM'])
 db = redis.Redis(host='db', port=6379, db=0)
@@ -21,7 +19,7 @@ model = MLP(100, 10)
 chainer.serializers.load_npz('result/pretrained_model', model)
 
 
-@app.route('/answer', methods=['GET', 'POST'])
+@app.route('/ai/answer', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         for xx in range(recognum):
@@ -36,6 +34,16 @@ def index():
     else:
         return render_template('index.html')
 
+@app.route('/ai/annotation', methods=['GET', 'POST'])
+def setGroundTruth():
+    if request.method == 'POST':
+        keyname = request.form['keyname']
+        gt = request.form['newnum']
+        db.hset(keyname, 'gt', gt)
+        return jsonify({'result': "true"})
+    else:
+        return render_template('index.html')
+
 def get_answer(req):
     img_str = re.search(r'base64,(.*)', req.form['img']).group(1)
     nparr = np.fromstring(base64.b64decode(img_str), np.uint8)
@@ -46,7 +54,7 @@ def get_answer(req):
     data = img_resize.astype(np.float32)
     ans = single_predictor(model, data)
 
-    keyname = image_save(img_resize, ans)
+    keyname = image_save(img_resize, ans[1])
     return ans, keyname
 
 def single_predictor(model, image):
@@ -60,7 +68,7 @@ def image_save(npimage, ans):
 #    cv2.imwrite("images/{}.jpg".format(datetime.now().strftime('%s')), npimage)
     keyname = datetime.now().strftime('%s')
     db.hset(keyname, 'img', npimage.tostring())
-    db.hset(keyname, 'pred', ans)
+    db.hset(keyname, 'pred', str(ans))
     filepath = "images/{}-{}.jpg".format(keyname, ans)
     cv2.imwrite(filepath, npimage)
     return keyname
@@ -69,16 +77,6 @@ def image_load(keyname):
 #    img = cv2.imread("images/1571757228.jpg", cv2.IMREAD_GRAYSCALE)
     npimage = np.fromstring(db.hget(keyname, 'img'), np.uint8).reshape((28,28))
     return npimage
-
-@app.route('/annotation', methods=['GET', 'POST'])
-def setGroundTruth():
-    if request.method == 'POST':
-        keyword = request.form['keyword']
-        gt = request.form['newnum']
-        db.hset(keyname, 'gt', gt)
-        return jsonify({'result': "true"})
-    else:
-        return render_template('index.html')
 
 
 if __name__ == "__main__":
