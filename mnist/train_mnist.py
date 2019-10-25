@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from __future__ import print_function
 
@@ -8,7 +8,7 @@ import chainer.functions as F
 import chainer.links as L
 from chainer import training
 from chainer.training import extensions
-
+from redisdump import getRedisDataset, catDatasets
 
 # Network definition
 class MLP(chainer.Chain):
@@ -67,6 +67,8 @@ def main():
 
     # Load the MNIST dataset
     train, test = chainer.datasets.get_mnist()
+    x, y = getRedisDataset()
+    train = catDatasets(train, x, y)
 
     train_iter = chainer.iterators.SerialIterator(train, args.batchsize)
     test_iter = chainer.iterators.SerialIterator(test, args.batchsize,

@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os, argparse
 import numpy as np
 import re, base64, cv2
@@ -65,19 +66,13 @@ def single_predictor(model, image):
     return (pred[0], label_y[0])
 
 def image_save(npimage, ans):
-#    cv2.imwrite("images/{}.jpg".format(datetime.now().strftime('%s')), npimage)
     keyname = datetime.now().strftime('%s')
     db.hset(keyname, 'img', npimage.tostring())
     db.hset(keyname, 'pred', str(ans))
     db.hset(keyname, 'gt', str(ans))
-    filepath = "images/{}-{}.jpg".format(keyname, ans)
-    cv2.imwrite(filepath, npimage)
+    #filepath = "images/{}-{}.jpg".format(keyname, ans)
+    #cv2.imwrite(filepath, npimage)
     return keyname
-
-def image_load(keyname):
-#    img = cv2.imread("images/1571757228.jpg", cv2.IMREAD_GRAYSCALE)
-    npimage = np.fromstring(db.hget(keyname, 'img'), np.uint8).reshape((28,28))
-    return npimage
 
 
 if __name__ == "__main__":

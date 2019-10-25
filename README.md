@@ -11,3 +11,7 @@ $ docker build -t ai .
 $ docker run -d ai
 ```
 
+## image dump
+```shell
+$ docker run -v ./dump:/tmp/mnist/images ai python redisdump.py
+```
